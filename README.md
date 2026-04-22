@@ -1,10 +1,11 @@
-# Notion Menu Bar Tracker 🐕
+# Give The Dog a Bone 🐕🦴
 
-A fun, adorable macOS menu bar app that shows your Notion todo progress with a cute dog chasing its bone!
+A fun, adorable macOS menu bar app that shows your Notion todo progress. Your goal: give the dog its bone! As you tick things off your todo list, the bone gets closer to the pup. Complete everything and celebrate with fireworks!
 
 ## Features
 
-- 🐕 **Cute Dog Progress**: A dog (🐕━━━━━🦴) and bone that get closer as you complete tasks!
+- 🐕 **Give The Dog a Bone**: Watch the bone (🦴) get closer to the dog (🐕) as you complete tasks - your goal is to give the pup its bone!
+- 🎆 **Celebration Fireworks**: Give the dog its bone (complete all tasks) and get a fireworks show with "You rock! Nice job!" 
 - 🔄 **Auto-refresh**: Polls Notion every 5 seconds to stay up-to-date
 - 📊 **Live Counter**: Shows completed/total tasks (e.g., "3/7")
 - 🎨 **Always Visible**: Lives in your menu bar so you always see your progress
@@ -77,14 +78,14 @@ Your Notion database should have:
 
 ## How It Works
 
-The menu bar shows a dog chasing a bone:
+The menu bar shows your progress in giving the dog its bone:
 - **Start**: 🐕━━━━━🦴 (many tasks remaining - bone is far away!)
-- **Progress**: 🐕━━🦴 (getting closer!)
-- **Complete**: 🐕🦴 (all done - the dog gets its bone!)
+- **Progress**: 🐕━━🦴 (you're getting closer to giving the dog its bone!)
+- **Complete**: 🐕🦴 (all done - you gave the dog its bone! 🎆)
 
-Each dash (━) represents an uncompleted task. As you check off todos, the dashes disappear and the bone gets closer to the pup!
+Each dash (━) represents an uncompleted task. As you check off todos, you're giving the dog its bone - the dashes disappear and the bone gets closer!
 
-Example: `🐕━━━🦴 3/7` means 3 completed, 4 remaining (4 dashes between dog and bone)
+Example: `🐕━━━🦴 3/7` means 3 completed, 4 remaining (4 more tasks until the dog gets its bone!)
 
 ## Customization
 
