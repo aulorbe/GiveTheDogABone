@@ -11,7 +11,7 @@ struct NotionConfig {
         ProcessInfo.processInfo.environment["NOTION_DATABASE_ID"] ?? ""
     }
     
-    static let updateIntervalSeconds: TimeInterval = 60 // Poll every 60 seconds
+    static let updateIntervalSeconds: TimeInterval = 5 // Poll every 5 seconds for near-instant updates
 }
 
 // MARK: - Notion API Models
@@ -24,20 +24,8 @@ struct NotionPage: Codable {
 }
 
 struct NotionProperty: Codable {
-    let checkbox: CheckboxValue?
-    
-    struct CheckboxValue: Codable {
-        let value: Bool?
-        
-        enum CodingKeys: String, CodingKey {
-            case value = "checkbox"
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.singleValueContainer()
-            value = try? container.decode(Bool.self)
-        }
-    }
+    let type: String?
+    let checkbox: Bool?
 }
 
 // MARK: - Notion API Client
@@ -56,20 +44,20 @@ class NotionClient {
         
         let (data, _) = try await URLSession.shared.data(for: request)
         let database = try JSONDecoder().decode(NotionDatabase.self, from: data)
-        
+
         var completed = 0
         let total = database.results.count
-        
+
         for page in database.results {
-            // Look for common checkbox property names
+            // Look for checkbox properties that are checked
             for (_, property) in page.properties {
-                if let checkboxValue = property.checkbox?.value, checkboxValue {
+                if property.type == "checkbox", let isChecked = property.checkbox, isChecked {
                     completed += 1
                     break
                 }
             }
         }
-        
+
         return (completed, total)
     }
 }
@@ -79,19 +67,33 @@ class MenuBarApp: NSObject {
     private var statusItem: NSStatusItem!
     private let notionClient = NotionClient()
     private var timer: Timer?
-    
+
     func start() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
+
         if let button = statusItem.button {
             button.title = "Loading..."
         }
-        
+
+        // Create menu
+        let menu = NSMenu()
+
+        let refreshItem = NSMenuItem(title: "🔄 Refresh Now", action: #selector(refreshNow), keyEquivalent: "r")
+        refreshItem.target = self
+        menu.addItem(refreshItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quitItem)
+
+        statusItem.menu = menu
+
         // Initial fetch
         Task {
             await updateMenuBar()
         }
-        
+
         // Start polling
         timer = Timer.scheduledTimer(withTimeInterval: NotionConfig.updateIntervalSeconds, repeats: true) { [weak self] _ in
             Task {
@@ -99,13 +101,18 @@ class MenuBarApp: NSObject {
             }
         }
     }
+
+    @objc private func refreshNow() {
+        Task {
+            await updateMenuBar()
+        }
+    }
     
     private func updateMenuBar() async {
         do {
             let stats = try await notionClient.fetchTodoStats()
-            let percentage = stats.total > 0 ? Double(stats.completed) / Double(stats.total) : 0.0
-            let progressBar = generateColorfulProgressBar(percentage: percentage)
-            
+            let progressBar = generateColorfulProgressBar(completed: stats.completed, total: stats.total)
+
             await MainActor.run {
                 if let button = statusItem.button {
                     button.title = "\(progressBar) \(stats.completed)/\(stats.total)"
@@ -120,25 +127,24 @@ class MenuBarApp: NSObject {
             print("Error fetching Notion data: \(error)")
         }
     }
-    
-    private func generateColorfulProgressBar(percentage: Double) -> String {
-        let totalBlocks = 10
-        let filledBlocks = Int(percentage * Double(totalBlocks))
-        
+
+    private func generateColorfulProgressBar(completed: Int, total: Int) -> String {
+        guard total > 0 else { return "" }
+
         // Rainbow colors based on progress
         let colors = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
         let emptyBlock = "⬜"
-        
+
         var bar = ""
-        for i in 0..<totalBlocks {
-            if i < filledBlocks {
-                let colorIndex = min(Int((Double(i) / Double(totalBlocks)) * Double(colors.count)), colors.count - 1)
+        for i in 0..<total {
+            if i < completed {
+                let colorIndex = min(Int((Double(i) / Double(total)) * Double(colors.count)), colors.count - 1)
                 bar += colors[colorIndex]
             } else {
                 bar += emptyBlock
             }
         }
-        
+
         return bar
     }
 }
