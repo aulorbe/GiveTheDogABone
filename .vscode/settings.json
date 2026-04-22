@@ -1,0 +1,10 @@
+{
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.splitCwd": "initial",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#32688d",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#193446"
+  },
+  "worktreeSync.color": "#32688d"
+}

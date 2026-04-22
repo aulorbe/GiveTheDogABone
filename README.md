@@ -1,16 +1,17 @@
 # Give The Dog a Bone 🐕🦴
 
-A fun, adorable macOS menu bar app that shows your Notion todo progress. Your goal: give the dog its bone! As you tick things off your todo list, the bone gets closer to the pup. Complete everything and celebrate with fireworks!
+A fun, adorable macOS menu bar app that shows your Notion todo progress. Your goal: give the dog its bone! As you tick things off your todo list, the bone gets closer to the pup. Complete everything and see 🎉!
 
 ## Features
 
-- 🐕 **Give The Dog a Bone**: Watch the bone (🦴) get closer to the dog (🐕) as you complete tasks - your goal is to give the pup its bone!
-- 🎆 **Celebration Fireworks**: Give the dog its bone (complete all tasks) and get a fireworks show with "You rock! Nice job!" 
+- 🐕 **Give The Dog a Bone**: Watch the bone (🦴) get closer to the dog (🐕) as you complete tasks
+- 🎉 **Celebration**: When all done, the menu bar shows 🎉
 - 🔄 **Auto-refresh**: Polls Notion every 5 seconds to stay up-to-date
 - 📊 **Live Counter**: Shows completed/total tasks (e.g., "3/7")
 - 🎨 **Always Visible**: Lives in your menu bar so you always see your progress
 - 🖱️ **Click to Refresh**: Click the menu bar for instant refresh (⌘R) or to quit (⌘Q)
-- 🚀 **Auto-start**: Automatically starts when you log in
+- 🚀 **Auto-start**: Can automatically start when you log in
+- 🛡️ **Stable**: Handles API errors gracefully, keeps last good value
 
 ## Setup
 
@@ -61,14 +62,28 @@ swift build -c release
 
 ### 6. Set Up Auto-Start (Optional)
 
-To make the app start automatically when you log in:
+To make the app start automatically when you log in, create a LaunchAgent:
 
 ```bash
-# Create LaunchAgent
-mkdir -p ~/Library/LaunchAgents
-# Copy the plist file from the repo or create one following the LaunchAgent format
-launchctl load ~/Library/LaunchAgents/com.notion.menubar.tracker.plist
+# The app needs your environment variables to be set in your shell config first
+# Then add to Login Items via System Settings > General > Login Items
+# Or use launchd (see launchd documentation)
 ```
+
+## Testing
+
+Run the test script:
+
+```bash
+source ~/.notion_menu_bar_config  # Load your credentials
+./test.sh
+```
+
+## Development
+
+- Logs are written to `/tmp/notion-dog-bone.log` for debugging
+- 5-second polling interval (configurable in `NotionConfig`)
+- Gracefully handles Notion API rate limiting and errors
 
 ## Database Requirements
 

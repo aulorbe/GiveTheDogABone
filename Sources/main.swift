@@ -62,112 +62,13 @@ class NotionClient {
     }
 }
 
-// MARK: - Celebration Window
-class CelebrationWindow: NSWindow {
-    private var fireworksTimer: Timer?
-    private var fireworkLabels: [NSTextField] = []
-
-    init() {
-        let screen = NSScreen.main?.frame ?? .zero
-        super.init(
-            contentRect: screen,
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
-        )
-
-        self.backgroundColor = NSColor.black.withAlphaComponent(0.7)
-        self.isOpaque = false
-        self.level = .floating
-        self.ignoresMouseEvents = false
-
-        setupCelebration()
-    }
-
-    private func setupCelebration() {
-        // Main message
-        let messageLabel = NSTextField(labelWithString: "You rock! Nice job! 🎉")
-        messageLabel.font = NSFont.systemFont(ofSize: 72, weight: .bold)
-        messageLabel.textColor = .white
-        messageLabel.alignment = .center
-        messageLabel.frame = NSRect(
-            x: 0,
-            y: self.frame.height / 2 - 50,
-            width: self.frame.width,
-            height: 100
-        )
-        contentView?.addSubview(messageLabel)
-
-        // Start fireworks
-        startFireworks()
-
-        // Auto-close after 5 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.close()
-        }
-
-        // Click anywhere to close
-        let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick))
-        contentView?.addGestureRecognizer(clickGesture)
-    }
-
-    @objc private func handleClick() {
-        close()
-    }
-
-    private func startFireworks() {
-        fireworksTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
-            self?.launchFirework()
-        }
-
-        // Stop after 5 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.fireworksTimer?.invalidate()
-        }
-    }
-
-    private func launchFirework() {
-        let emojis = ["🎆", "✨", "🎇", "💥", "⭐", "🌟"]
-        let emoji = emojis.randomElement() ?? "🎆"
-
-        let x = CGFloat.random(in: 100...(self.frame.width - 100))
-        let startY = self.frame.height
-
-        let firework = NSTextField(labelWithString: emoji)
-        firework.font = NSFont.systemFont(ofSize: 48)
-        firework.isBezeled = false
-        firework.backgroundColor = .clear
-        firework.frame = NSRect(x: x, y: startY, width: 60, height: 60)
-        contentView?.addSubview(firework)
-        fireworkLabels.append(firework)
-
-        // Animate upward with fade
-        NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 2.0
-            firework.animator().alphaValue = 0
-            firework.animator().frame = NSRect(
-                x: x + CGFloat.random(in: -50...50),
-                y: CGFloat.random(in: 200...600),
-                width: 60,
-                height: 60
-            )
-        }, completionHandler: {
-            firework.removeFromSuperview()
-        })
-    }
-
-    override func close() {
-        fireworksTimer?.invalidate()
-        super.close()
-    }
-}
-
 // MARK: - Menu Bar App
 class MenuBarApp: NSObject {
     private var statusItem: NSStatusItem!
     private let notionClient = NotionClient()
     private var timer: Timer?
-    private var previousCompleted: Int = -1
+    private var isUpdating = false
+    private var lastGoodTitle: String?
 
     func start() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -209,40 +110,62 @@ class MenuBarApp: NSObject {
         }
     }
     
-    private func updateMenuBar() async {
-        do {
-            let stats = try await notionClient.fetchTodoStats()
-            let progressBar = generateColorfulProgressBar(completed: stats.completed, total: stats.total)
-
-            await MainActor.run {
-                if let button = statusItem.button {
-                    button.title = "\(progressBar) \(stats.completed)/\(stats.total)"
-                }
-
-                // Check if just completed all tasks (celebration time!)
-                if stats.total > 0 && stats.completed == stats.total && previousCompleted != stats.total {
-                    showCelebration()
-                }
-
-                previousCompleted = stats.completed
+    private func log(_ message: String) {
+        let logFile = "/tmp/notion-dog-bone.log"
+        let timestamp = Date().formatted()
+        let line = "[\(timestamp)] \(message)\n"
+        if let data = line.data(using: .utf8) {
+            if let handle = FileHandle(forWritingAtPath: logFile) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                handle.closeFile()
+            } else {
+                try? data.write(to: URL(fileURLWithPath: logFile))
             }
-        } catch {
-            await MainActor.run {
-                if let button = statusItem.button {
-                    button.title = "❌ Error"
-                }
-            }
-            print("Error fetching Notion data: \(error)")
         }
     }
 
-    private func showCelebration() {
-        let celebrationWindow = CelebrationWindow()
-        celebrationWindow.makeKeyAndOrderFront(nil)
+    private func updateMenuBar() async {
+        // Prevent concurrent updates
+        guard !isUpdating else {
+            log("⏭️ Skipping - update already in progress")
+            return
+        }
+
+        isUpdating = true
+        defer { isUpdating = false }
+
+        do {
+            log("🔄 Fetching from Notion...")
+            let stats = try await notionClient.fetchTodoStats()
+            log("✅ Got stats: \(stats.completed)/\(stats.total)")
+
+            let progressBar = generateColorfulProgressBar(completed: stats.completed, total: stats.total)
+            log("✅ Generated bar: \(progressBar)")
+
+            await MainActor.run {
+                if let button = statusItem.button {
+                    let newTitle = "\(progressBar) \(stats.completed)/\(stats.total)"
+                    button.title = newTitle
+                    lastGoodTitle = newTitle
+                    log("✅ Updated UI to: \(newTitle)")
+                }
+            }
+        } catch {
+            log("❌ API Error (keeping last good value): \(error.localizedDescription)")
+
+            // Don't show error - keep last good value
+            await MainActor.run {
+                if let button = statusItem.button, lastGoodTitle == nil {
+                    button.title = "🐕 Loading..."
+                }
+            }
+        }
     }
 
     private func generateColorfulProgressBar(completed: Int, total: Int) -> String {
-        guard total > 0 else { return "🐕" }
+        // No tasks or all complete? Just show celebration!
+        guard total > 0 else { return "🎉" }
 
         // Dachshund that gets shorter as you complete tasks!
         let remaining = total - completed
@@ -259,9 +182,9 @@ class MenuBarApp: NSObject {
             body += bodySegment
         }
 
-        // When all done, just show the happy dog with its bone!
+        // When all done, just show celebration emoji!
         if remaining == 0 {
-            return "\(head)\(tail)"
+            return "🎉"
         }
 
         return "\(head)\(body)\(tail)"
