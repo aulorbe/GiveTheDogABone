@@ -1,0 +1,11 @@
+# Swift build artifacts
+.build/
+*.xcodeproj
+*.xcworkspace
+
+# macOS
+.DS_Store
+
+# Config files with secrets
+.notion_menu_bar_config
+*.env
