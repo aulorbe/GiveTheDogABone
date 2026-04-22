@@ -129,23 +129,29 @@ class MenuBarApp: NSObject {
     }
 
     private func generateColorfulProgressBar(completed: Int, total: Int) -> String {
-        guard total > 0 else { return "" }
+        guard total > 0 else { return "🐕" }
 
-        // Rainbow colors based on progress
-        let colors = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
-        let emptyBlock = "⬜"
+        // Dachshund that gets shorter as you complete tasks!
+        let remaining = total - completed
 
-        var bar = ""
-        for i in 0..<total {
-            if i < completed {
-                let colorIndex = min(Int((Double(i) / Double(total)) * Double(colors.count)), colors.count - 1)
-                bar += colors[colorIndex]
-            } else {
-                bar += emptyBlock
-            }
+        // Build the dachshund: head + body segments + tail
+        let head = "🐕"
+        let bodySegment = "━"
+        let tail = "🦴"
+
+        // The dog gets shorter as you complete more tasks
+        // Start with a long body, shrink down to just the head!
+        var body = ""
+        for _ in 0..<remaining {
+            body += bodySegment
         }
 
-        return bar
+        // When all done, just show the happy dog with its bone!
+        if remaining == 0 {
+            return "\(head)\(tail)"
+        }
+
+        return "\(head)\(body)\(tail)"
     }
 }
 

@@ -1,13 +1,15 @@
-# Notion Menu Bar Tracker 🌈
+# Notion Menu Bar Tracker 🐕
 
-A fun, colorful macOS menu bar app that shows your Notion todo progress with a rainbow progress bar!
+A fun, adorable macOS menu bar app that shows your Notion todo progress with a cute dog chasing its bone!
 
 ## Features
 
-- 🌈 **Colorful Progress Bar**: Visual rainbow bar that fills up as you complete tasks
-- 🔄 **Auto-refresh**: Polls Notion every 60 seconds to stay up-to-date
-- 📊 **Live Counter**: Shows completed/total tasks (e.g., "7/10")
+- 🐕 **Cute Dog Progress**: A dog (🐕━━━━━🦴) and bone that get closer as you complete tasks!
+- 🔄 **Auto-refresh**: Polls Notion every 5 seconds to stay up-to-date
+- 📊 **Live Counter**: Shows completed/total tasks (e.g., "3/7")
 - 🎨 **Always Visible**: Lives in your menu bar so you always see your progress
+- 🖱️ **Click to Refresh**: Click the menu bar for instant refresh (⌘R) or to quit (⌘Q)
+- 🚀 **Auto-start**: Automatically starts when you log in
 
 ## Setup
 
@@ -56,26 +58,40 @@ swift build -c release
 ./.build/release/NotionMenuBarTracker
 ```
 
+### 6. Set Up Auto-Start (Optional)
+
+To make the app start automatically when you log in:
+
+```bash
+# Create LaunchAgent
+mkdir -p ~/Library/LaunchAgents
+# Copy the plist file from the repo or create one following the LaunchAgent format
+launchctl load ~/Library/LaunchAgents/com.notion.menubar.tracker.plist
+```
+
 ## Database Requirements
 
 Your Notion database should have:
 - Multiple pages/items (these are your todos)
 - A checkbox property (any name works - the app looks for checkbox properties)
 
+## How It Works
+
+The menu bar shows a dog chasing a bone:
+- **Start**: 🐕━━━━━🦴 (many tasks remaining - bone is far away!)
+- **Progress**: 🐕━━🦴 (getting closer!)
+- **Complete**: 🐕🦴 (all done - the dog gets its bone!)
+
+Each dash (━) represents an uncompleted task. As you check off todos, the dashes disappear and the bone gets closer to the pup!
+
+Example: `🐕━━━🦴 3/7` means 3 completed, 4 remaining (4 dashes between dog and bone)
+
 ## Customization
 
 Edit `Sources/main.swift` to customize:
-- `updateIntervalSeconds`: How often to poll Notion (default: 60 seconds)
-- `generateColorfulProgressBar()`: Change the progress bar appearance
-- Colors: Modify the `colors` array for different rainbow patterns
-
-## How It Works
-
-The progress bar shows:
-- 🟥🟧🟨🟩🟦🟪 = Filled blocks (completed tasks) with rainbow gradient
-- ⬜ = Empty blocks (remaining tasks)
-
-Example: `🟥🟧🟨🟩🟦🟪🟪⬜⬜⬜ 7/10` means 7 out of 10 tasks done!
+- `updateIntervalSeconds`: How often to poll Notion (default: 5 seconds)
+- `generateColorfulProgressBar()`: Change the dog/bone to other emojis
+- Try different characters for the body segments (━, ─, ~, etc.)
 
 ## Troubleshooting
 
