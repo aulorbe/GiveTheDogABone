@@ -73,9 +73,11 @@ class MenuBarApp: NSObject {
     func start() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
-        if let button = statusItem.button {
-            button.title = "Loading..."
+        guard let button = statusItem.button else {
+            fatalError("Failed to create status bar item")
         }
+
+        button.title = "🐕 Loading..."
 
         // Create menu
         let menu = NSMenu()
@@ -202,6 +204,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 // Main
 let app = NSApplication.shared
+app.setActivationPolicy(.accessory)
+
 let delegate = AppDelegate()
 app.delegate = delegate
+
 app.run()

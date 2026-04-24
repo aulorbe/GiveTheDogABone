@@ -54,21 +54,62 @@ Then source it in your shell config (~/.zshrc or ~/.bashrc):
 
 ### 5. Build and Run
 
+Build:
 ```bash
 cd ~/Desktop/scripts/NotionMenuBarTracker
 swift build -c release
-./.build/release/NotionMenuBarTracker
+```
+
+Run with the helper script:
+```bash
+./run.sh
+```
+
+Or manually:
+```bash
+source ~/.notion_menu_bar_config
+./.build/release/NotionMenuBarTracker &
 ```
 
 ### 6. Set Up Auto-Start (Optional)
 
-To make the app start automatically when you log in, create a LaunchAgent:
+Create a LaunchAgent that runs at login:
 
 ```bash
-# The app needs your environment variables to be set in your shell config first
-# Then add to Login Items via System Settings > General > Login Items
-# Or use launchd (see launchd documentation)
+cat > ~/Library/LaunchAgents/com.notion.menubar.tracker.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.notion.menubar.tracker</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR_USERNAME/Desktop/scripts/NotionMenuBarTracker/.build/release/NotionMenuBarTracker</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>NOTION_API_KEY</key>
+        <string>YOUR_API_KEY_HERE</string>
+        <key>NOTION_DATABASE_ID</key>
+        <string>YOUR_DATABASE_ID_HERE</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/notion-dog-bone-out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/notion-dog-bone-err.log</string>
+</dict>
+</plist>
+EOF
+
+launchctl load ~/Library/LaunchAgents/com.notion.menubar.tracker.plist
 ```
+
+Replace `YOUR_USERNAME`, `YOUR_API_KEY_HERE`, and `YOUR_DATABASE_ID_HERE` with your values.
 
 ## Testing
 
@@ -111,15 +152,21 @@ Edit `Sources/main.swift` to customize:
 
 ## Troubleshooting
 
-**"❌ Error" appears in menu bar:**
+**App isn't showing in menu bar:**
+- The app is likely running (check logs with `tail -f /tmp/notion-dog-bone.log`)
+- Menu bar display is a known macOS limitation with simple executables
+- Verify it's working by checking the logs - you should see updates every 5 seconds
+
+**API errors in logs:**
 - Check your NOTION_API_KEY is correct
 - Verify your NOTION_DATABASE_ID is correct
 - Make sure the integration has access to the database
-- Check Console.app for detailed error messages
+- Notion may rate-limit - app handles this gracefully by keeping the last good value
 
 **No progress shown (0/0):**
 - The database might be empty
 - The integration might not have permission to read the database
+- Check logs for API errors
 
 ## License
 
